@@ -1,17 +1,17 @@
 """
 SETUP:
 Use: generates a sound frequency and amplitude scaled from the wavelength and relative intensity of an element
-1. NIST ASD data (input element='H') ion stage default I, wavelength range default (4000, 7000)
+current final output is table of Å, Rel Intensity, Hz, Rel Amplitude, (R, G, B)
+1. NIST ASD data (input element='H') ion stage default I, wavelength range default (3800, 7500)
     1.1 parse table to get wavelength (Å) and RI (excluding where RI is N/A)
     1.2 return Å, RI table
 2. new table with sound data
-    2.1 convert Å to Hz scaled from 4000-7000 to 20.0, 20000.0
+    2.1 convert Å to Hz scaled from 3800-7500 to 20.0, 20000.0
     2.2 convert RI to floating point amplitude
         2.2.1 scale RI range from 0 to 10000 to range of 0 to 1 
     2.3 return Hz, Amp table
 3. convert Å to RGB
-    3.1 divide Å by 10 to get nm
-    3.2 use wavelength_to_rgb
+    3.1 use wavelength_to_rgb(Å/10)
 
 """
 
@@ -19,17 +19,80 @@ from astroquery.nist import Nist
 import astropy.units as u
 import numpy as np
 
-VISIBLE_RANGE = (4000, 7000)
+VISIBLE_RANGE = (3800, 7500)
 
 def get_element_table(element='H'):
     """
     Docstring for get_element_table
     
     :param element: Element key, default is Hydrogen
-    :return: a table of A wavelength, RE relative intensity, Hz sound frequency, 
+    :return: a table of A wavelength, RE relative intensity
     """
+    ion_stage='I'
+    wavelength_range=VISIBLE_RANGE
 
-    return None
+    linename = f"{element} {ion_stage}"
+
+    try:
+        if wavelength_range:
+            # Query with wavelength range
+            min_wl, max_wl = wavelength_range
+            table = Nist.query(min_wl * u.AA, max_wl * u.AA, linename=linename)
+        else:
+            # Query all wavelengths (use a very broad range)
+            table = Nist.query(1 * u.AA, 1000000 * u.AA, linename=linename)
+        
+        if table is None or len(table) == 0:
+            print(f"No data found for {linename}")
+            return None, None, None
+        
+        # Extract Ritz wavelengths (calculated from energy levels)
+        # Column name is 'Ritz' in the table
+        ritz_wl = []
+        rel_int = []
+        for row in table:
+            # Get Ritz wavelength (prioritize this over observed)
+            if 'Ritz' in table.colnames and row['Ritz']:
+                try:
+                    # Clean the wavelength string (remove +, ?, *, etc.)
+                    wl_str = str(row['Ritz']).strip()
+                    # Remove common NIST quality indicators
+                    wl_str = wl_str.rstrip('+?*:')
+                    wl = float(wl_str)
+                    ritz_wl.append(wl)
+                    
+                    # Get relative intensity if available
+                    if 'Rel.' in table.colnames and row['Rel.']:
+                        try:
+                            int_str = str(row['Rel.']).strip()
+                            int_str = int_str.rstrip('+?*:')
+                            intensity = float(int_str)
+                        except (ValueError, TypeError):
+                            intensity = np.nan
+                    else:
+                        intensity = np.nan
+                    rel_int.append(intensity)
+                    
+                except (ValueError, TypeError):
+                    # Skip rows that can't be converted
+                    continue
+        wavelengths = np.array(ritz_wl)
+        intensities = np.array(rel_int)
+
+        valid_mask = ~np.isnan(intensities)
+        wavelengths = wavelengths[valid_mask]
+        intensities = intensities[valid_mask]
+        
+        print(f"Retrieved {len(wavelengths)} spectral lines for {linename}")
+        if len(wavelengths) > 0:
+            print(f"Wavelength range: {wavelengths.min():.2f} - {wavelengths.max():.2f} Å")
+        
+        return wavelengths, intensities
+    
+    except Exception as e:
+        print(f"Error querying NIST: {e}")
+        print("Make sure you have astroquery installed: pip install astroquery")
+        return None, None
 
 # from github: https://gist.github.com/error454/65d7f392e1acd4a782fc
 def wavelength_to_rgb(wavelength, gamma=0.8):
@@ -78,7 +141,7 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
     B *= 255
     return (int(R), int(G), int(B))
 
-def get_element_data(element, ion_stage='I', wavelength_range=None):
+def get_element_data(element, ion_stage='I', wavelength_range=VISIBLE_RANGE):
     """
     Get spectral line data from NIST ASD for any element.
     
@@ -127,7 +190,7 @@ def get_element_data(element, ion_stage='I', wavelength_range=None):
         
         if table is None or len(table) == 0:
             print(f"No data found for {linename}")
-            return None, None, None
+            return None, None
         
         # Extract Ritz wavelengths (calculated from energy levels)
         # Column name is 'Ritz' in the table
@@ -172,12 +235,12 @@ def get_element_data(element, ion_stage='I', wavelength_range=None):
         if len(wavelengths) > 0:
             print(f"Wavelength range: {wavelengths.min():.2f} - {wavelengths.max():.2f} Å")
         
-        return wavelengths, intensities, table
+        return wavelengths, intensities
         
     except Exception as e:
         print(f"Error querying NIST: {e}")
         print("Make sure you have astroquery installed: pip install astroquery")
-        return None, None, None
+        return None, None
 
 
 def print_spectral_lines(wavelengths, intensities, n_lines=20):
@@ -241,10 +304,18 @@ if __name__ == "__main__":
     print("=" * 70)
     print("NIST ASD SPECTRAL DATA EXTRACTOR")
     print("=" * 70)
+
+    wl, ri = get_element_data('H')
+    print("WL: ")
+    for w in wl:
+        print(w)
     
-    # Example 1: Hydrogen in visible range
-    print("\nHydrogen (H I) - Visible range (4000-7000 Å)")
-    print("-" * 70)
+    print("RI: ")
+    for i in ri:
+        print(i)
+
+    #print(wavelength_to_rgb(600))
+    """
     h_wl, h_int, h_table = get_element_data('H', 'I', VISIBLE_RANGE)
     
     if h_wl is not None:
@@ -266,3 +337,4 @@ if __name__ == "__main__":
         print("\nStrongest lines:")
         strong_ol, strong_int = get_strongest_lines(o_wl, o_int, n_strongest=50)
         print_spectral_lines(strong_wl, strong_int, n_lines=50)
+        """
