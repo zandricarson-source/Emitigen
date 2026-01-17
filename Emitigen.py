@@ -94,6 +94,7 @@ def get_element_spectrum(element='H'):
         print("Make sure you have astroquery installed: pip install astroquery")
         return None, None
 
+# helper function, gamma in our case is the absolue amplitude generated from the relative intensity
 # from github: https://gist.github.com/error454/65d7f392e1acd4a782fc
 def wavelength_to_rgb(wavelength, gamma=0.8):
 
@@ -288,6 +289,7 @@ def get_strongest_lines(wavelengths, intensities, n_strongest=10):
     
     return valid_wl[sorted_idx[:n_strongest]], valid_int[sorted_idx[:n_strongest]]
 
+#helper function, wavelength to sound requency
 def A_to_hz_log(A):
     A = max(3800, min(7500, A))
 
@@ -298,6 +300,7 @@ def A_to_hz_log(A):
 
     return float(f_min * (f_max / f_min) ** x)
 
+#helper function
 def RI_to_Amp(ri, max_ri):
     """
     Docstring for RI_to_Amp
@@ -309,13 +312,12 @@ def RI_to_Amp(ri, max_ri):
     amp = ri/max_ri
     return float(amp)
 
-
-
-def get_full_table(element):
+# element -> color and sound data
+def get_color_and_sound_data(element):
     """
-    Docstring for get_full_table
+    Docstring for get_color_and_sound_data
     
-    :param element: element key
+    :param element: element symbol
     : output: returns a table of Å, Rel Intensity, Hz, Rel Amplitude, (R, G, B)
     """
     table = []
@@ -331,8 +333,6 @@ def get_full_table(element):
     for i in range(len(wl)):
         rgb.append(wavelength_to_rgb(wl[i]/10, amp[i]))
 
-    table.append(wl)
-    table.append(ri)
     table.append(hz)
     table.append(amp)
     table.append(rgb)
@@ -346,7 +346,7 @@ if __name__ == "__main__":
     print("NIST ASD SPECTRAL DATA EXTRACTOR")
     print("=" * 70)
 
-    get_full_table('H')
+    get_color_and_sound_data('H')
 
     #print(wavelength_to_rgb(600))
     """
