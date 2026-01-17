@@ -21,7 +21,7 @@ import numpy as np
 
 VISIBLE_RANGE = (3800, 7500)
 
-def get_element_table(element='H'):
+def get_element_spectrum(element='H'):
     """
     Docstring for get_element_table
     
@@ -289,15 +289,56 @@ def get_strongest_lines(wavelengths, intensities, n_strongest=10):
     return valid_wl[sorted_idx[:n_strongest]], valid_int[sorted_idx[:n_strongest]]
 
 def A_to_hz_log(A):
-    A = max(4000, min(7000, A))
+    A = max(3800, min(7500, A))
 
-    wl_min, wl_max = 4000, 7000
+    wl_min, wl_max = 3800, 7500
     f_min, f_max = 20.0, 20000.0
 
     x = (wl_max - A) / (wl_max - wl_min)
 
-    return f_min * (f_max / f_min) ** x
+    return float(f_min * (f_max / f_min) ** x)
 
+def RI_to_Amp(ri, max_ri):
+    """
+    Docstring for RI_to_Amp
+    
+    :param ri: an RI value
+    :param max_ri: the largest value in the set
+    :return amp: returns the amplitude float 0-1
+    """
+    amp = ri/max_ri
+    return float(amp)
+
+
+
+def get_full_table(element):
+    """
+    Docstring for get_full_table
+    
+    :param element: element key
+    : output: returns a table of Å, Rel Intensity, Hz, Rel Amplitude, (R, G, B)
+    """
+    table = []
+    wl, ri = get_element_spectrum(element)
+    hz = []
+    amp = []
+    rgb = []
+
+    for l in wl:
+        hz.append(A_to_hz_log(l))
+    for i in ri:
+        amp.append(RI_to_Amp(i, max(ri)))
+    for i in range(len(wl)):
+        rgb.append(wavelength_to_rgb(wl[i]/10, amp[i]))
+
+    table.append(wl)
+    table.append(ri)
+    table.append(hz)
+    table.append(amp)
+    table.append(rgb)
+    #print(table)
+    for i in range(len(table)):
+        print(table[i])
 
 # Example usage
 if __name__ == "__main__":
@@ -305,14 +346,7 @@ if __name__ == "__main__":
     print("NIST ASD SPECTRAL DATA EXTRACTOR")
     print("=" * 70)
 
-    wl, ri = get_element_data('H')
-    print("WL: ")
-    for w in wl:
-        print(w)
-    
-    print("RI: ")
-    for i in ri:
-        print(i)
+    get_full_table('H')
 
     #print(wavelength_to_rgb(600))
     """
