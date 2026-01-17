@@ -12,12 +12,15 @@ current final output is table of Å, Rel Intensity, Hz, Rel Amplitude, (R, G, B)
     2.3 return Hz, Amp table
 3. convert Å to RGB
     3.1 use wavelength_to_rgb(Å/10)
-
+4. convert list of sound frequencies and amplitudes into a sound
+    4.1 use scipy wave file
+5. display the color and sound somehow
 """
 
 from astroquery.nist import Nist
 import astropy.units as u
 import numpy as np
+from scipy.io import wavfile
 
 VISIBLE_RANGE = (3800, 7500)
 
@@ -142,6 +145,7 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
     B *= 255
     return (int(R), int(G), int(B))
 
+#allows to be more specific but get_element_spectrum is more specialized
 def get_element_data(element, ion_stage='I', wavelength_range=VISIBLE_RANGE):
     """
     Get spectral line data from NIST ASD for any element.
@@ -243,52 +247,6 @@ def get_element_data(element, ion_stage='I', wavelength_range=VISIBLE_RANGE):
         print("Make sure you have astroquery installed: pip install astroquery")
         return None, None
 
-
-def print_spectral_lines(wavelengths, intensities, n_lines=20):
-    """Print formatted spectral line data"""
-    print(f"\n{'Wavelength (Å)':<20} {'Rel. Intensity':<20}")
-    print("-" * 40)
-    
-    # Sort by wavelength
-    sorted_idx = np.argsort(wavelengths)
-    
-    for i in sorted_idx[:n_lines]:
-        wl = wavelengths[i]
-        intensity = intensities[i]
-        
-        if np.isnan(intensity):
-            intensity_str = "N/A"
-        else:
-            intensity_str = f"{intensity:.1f}"
-        
-        print(f"{wl:<20.4f} {intensity_str:<20}")
-
-
-def get_strongest_lines(wavelengths, intensities, n_strongest=10):
-    """
-    Get the strongest spectral lines
-    
-    Returns:
-    --------
-    strong_wl : numpy array
-        Wavelengths of strongest lines
-    strong_int : numpy array
-        Intensities of strongest lines
-    """
-    # Filter out NaN intensities
-    valid_mask = ~np.isnan(intensities)
-    valid_wl = wavelengths[valid_mask]
-    valid_int = intensities[valid_mask]
-    
-    if len(valid_int) == 0:
-        print("No intensity data available")
-        return np.array([]), np.array([])
-    
-    # Sort by intensity
-    sorted_idx = np.argsort(valid_int)[::-1]  # Descending order
-    
-    return valid_wl[sorted_idx[:n_strongest]], valid_int[sorted_idx[:n_strongest]]
-
 #helper function, wavelength to sound requency
 def A_to_hz_log(A):
     A = max(3800, min(7500, A))
@@ -311,6 +269,33 @@ def RI_to_Amp(ri, max_ri):
     """
     amp = ri/max_ri
     return float(amp)
+
+def freq_and_amp_to_sound(frequencies, amplitudes):
+    frequencies = np.array(frequencies)  # Hz
+    amplitudes = np.array(amplitudes)    # Relative amplitudes
+
+    # Audio parameters
+    sample_rate = 44100  # CD quality
+    duration = 2.0       # seconds
+
+    # Create time array
+    t = np.linspace(0, duration, int(sample_rate * duration))
+
+    # Generate composite waveform by summing all frequency components
+    composite_wave = np.zeros_like(t)
+    for freq, amp in zip(frequencies, amplitudes):
+        composite_wave += amp * np.sin(2 * np.pi * freq * t)
+    
+    # Normalize to prevent clipping
+    composite_wave = composite_wave / np.max(np.abs(composite_wave))
+    # Convert to 16-bit PCM
+    audio_data = np.int16(composite_wave * 32767)
+
+    # Save to file
+    wavfile.write('composite_sound.wav', sample_rate, audio_data)
+    print("file saved")
+
+    return audio_data
 
 # element -> color and sound data
 def get_color_and_sound_data(element):
@@ -336,9 +321,7 @@ def get_color_and_sound_data(element):
     table.append(hz)
     table.append(amp)
     table.append(rgb)
-    #print(table)
-    for i in range(len(table)):
-        print(table[i])
+    return table
 
 # Example usage
 if __name__ == "__main__":
@@ -346,29 +329,5 @@ if __name__ == "__main__":
     print("NIST ASD SPECTRAL DATA EXTRACTOR")
     print("=" * 70)
 
-    get_color_and_sound_data('H')
-
-    #print(wavelength_to_rgb(600))
-    """
-    h_wl, h_int, h_table = get_element_data('H', 'I', VISIBLE_RANGE)
-    
-    if h_wl is not None:
-        print_spectral_lines(h_wl, h_int, n_lines=10)
-        
-        print("\nStrongest lines:")
-        strong_wl, strong_int = get_strongest_lines(h_wl, h_int, n_strongest=5)
-        print_spectral_lines(strong_wl, strong_int, n_lines=5)
-    
-    # All oxygen lines in Visible range
-    print("\n" + "=" * 70)
-    print("Oxygen (O I) - Visible range (4000-7000 Å)")
-    print("-" * 70)
-    o_wl, o_int, o_table = get_element_data('O', 'I', VISIBLE_RANGE)
-    
-    if o_wl is not None:
-        print_spectral_lines(o_wl, o_int, n_lines=1000)
-        
-        print("\nStrongest lines:")
-        strong_ol, strong_int = get_strongest_lines(o_wl, o_int, n_strongest=50)
-        print_spectral_lines(strong_wl, strong_int, n_lines=50)
-        """
+    table = get_color_and_sound_data('He')
+    audio_data = freq_and_amp_to_sound(table[0], table[1])
