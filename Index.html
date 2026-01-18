@@ -39,12 +39,14 @@
         }
 
         .emission-spectrum {
+            position: relative;
             width: 100%;
             height: 80px;
             background-color: #000000;
             margin-bottom: 30px;
             border: 1px solid #333;
             border-radius: 4px;
+            overflow: hidden;
         }
 
         .periodic-table {
@@ -100,10 +102,10 @@
 <body>
     <div class="container">
         <h1>Emitigen</h1>
-        
+        <h2>VOLUME WARNING</h2>
         <div class="description">
             <p>Emitigen is a program that scales the frequencies of the wavelengths of each element's visible light emission spectrum to the audible sound spectrum, thus allowing you to "hear" an element's light emission. The elements don't actually produce these noises, but this functions as just one way to perceive the data from a different perspective.</p>
-            <p>You can click any element on the periodic table below to hear each element's unique song. In this format, many of the sounds are quite strange and beautiful, but some can be quite loud. The loud elements are marked with a warning.</p>
+            <p>You can click any element on the periodic table below to hear each element's unique song. In this format, many of the sounds are quite strange and beautiful, but can often be quite loud.</p>
         </div>
 
         <div class="emission-spectrum" id="spectrum"></div>
@@ -121,20 +123,204 @@
     <script>
         // Create the 18x9 grid of elements
         const periodicTable = document.getElementById('periodicTable');
+        const spectrumBox = document.getElementById('spectrum');
+
+        // Define empty cells
+        const emptyCells = [
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 
+                20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 
+                126, 127, 128, 143,
+                144, 145, 146, 161
+            ]
+        // map the elements to the grid
+        const cellToElement = {
+            0: "H", 17: "He",
+            18: "Li", 19: "Be", 30: "B", 31: "C", 32: "N", 33: "O", 34: "F", 35: "Ne",
+            36: "Na", 37: "Mg", 48: "Al", 49: "Si", 50: "P", 51: "S", 52: "Cl", 53: "Ar",
+            54: "K", 55: "Ca", 56: "Sc", 57: "Ti", 58: "V", 59: "Cr", 60: "Mn", 61: "Fe", 62: "Co", 63: "Ni", 64: "Cu", 65: "Zn", 66: "Ga", 67: "Ge", 68: "As", 69: "Se", 70: "Br", 71: "Kr",
+            72: "Rb", 73: "Sr", 74: "Y", 75: "Zr", 76: "Nb", 77: "Mo", 78: "Tc", 79: "Ru", 80: "Rh", 81: "Pd", 82: "Ag", 83: "Cd", 84: "In", 85: "Sn", 86: "Sb", 87: "Te", 88: "I", 89: "Xe",
+            90: "Cs", 91: "Ba", 92: "La", 93: "Hf", 94: "Ta", 95: "W", 96: "Re", 97: "Os", 98: "Ir", 99: "Pt", 100: "Au", 101: "Hg", 102: "Tl", 103: "Pb", 104: "Bi", 105: "Po", 106: "At", 107: "Rn",
+            108: "Fr", 109: "Ra", 110: "Ac", 111: "Rf", 112: "Db", 113: "Sg", 114: "Bh", 115: "Hs", 116: "Mt", 117: "Ds", 118: "Rg", 119: "Cn", 120: "Nh", 121: "Fl", 122: "Mc", 123: "Lv", 124: "Ts", 125: "Og",
+            129: "Ce", 130: "Pr", 131: "Nd", 132: "Pm", 133: "Sm", 134: "Eu", 135: "Gd", 136: "Tb", 137: "Dy", 138: "Ho", 139: "Er", 140: "Tm", 141: "Yb", 142: "Lu",
+            147: "Th", 148: "Pa", 149: "U", 150: "Np", 151: "Pu", 152: "Am", 153: "Cm", 154: "Bk", 155: "Cf", 156: "Es", 157: "Fm", 158: "Md", 159: "No", 160: "Lr"
+        };
         
+        let elementData = {}
+        let currentlyPlaying = null; // Track which element is currently playing
+        let audioContext = null;
+        let oscillators = [];
+        let gainNodes = [];
+
+        const WAVELENGTH_MIN = 3800;
+        const WAVELENGTH_MAX = 7500;
+
+        // Load JSON file
+        fetch('elements.json')
+            .then(response => response.json())
+            .then(data => {
+                elementData = data;
+                console.log('Data loaded!', elementData);
+                initializePeriodicTable();
+            })
+            .catch(error => console.error('Error loading data:', error));
+        
+        // function to play sound from hz and amp
+        function playSound(symbol) {
+            if (!elementData[symbol]) return;
+
+            const data = elementData[symbol];
+            const frequencies = data.frequencies;
+            const amplitudes = data.amplitudes;
+
+            // create audio context if doesnt exist
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // create main gain node for overall volume control
+            const mainGain = audioContext.createGain();
+            mainGain.gain.value = 0.1;
+            mainGain.connect(audioContext.destination);
+            
+            // create oscillators for each frequency
+            for (let i = 0; i < frequencies.length; i++) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.frequency.value = frequencies[i];
+                oscillator.type = 'sine';
+                
+                gainNode.gain.value = amplitudes[i] || 0;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(mainGain);
+                
+                oscillator.start();
+                
+                oscillators.push(oscillator);
+                gainNodes.push(gainNode);
+            }
+        }
+
+        // stop all currently playing sounds
+        function stopSound() {
+            oscillators.forEach(osc => {
+                try {
+                    osc.stop();
+                } catch (e) {
+                    // Oscillator might already be stopped
+                }
+            });
+            
+            oscillators = [];
+            gainNodes = [];
+        }
+        
+        // displays emission spectrum
+        function displaySpectrum(symbol) {
+            // clear previous spectrum
+            spectrumBox.innerHTML = '';
+
+            if (!elementData[symbol]) return;
+
+            const data = elementData[symbol];
+            const wavelengths = data.wavelengths;
+            const amplitudes = data.amplitudes;
+            const colors = data.colors;
+
+            // create spectrum lines
+            for (let i = 0; i < wavelengths.length; i++) {
+                const wavelength = wavelengths[i];
+
+                // calculate horizontal position (0-100%)
+                const position = ((wavelength - WAVELENGTH_MIN) / (WAVELENGTH_MAX - WAVELENGTH_MIN)) * 100;
+
+                // get line properties
+                const amplitude = amplitudes[i];
+                const color = colors[i];
+                const rgbColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+
+                // calculate line thickness from amplitude
+                const thickness = 1 + (amplitude * 4);
+
+                // create line element
+                const line = document.createElement('div');
+                line.style.position = 'absolute';
+                line.style.left = `${position}%`;
+                line.style.top = '0';
+                line.style.width = `${thickness}px`;
+                line.style.height = '100%';
+                line.style.backgroundColor = rgbColor;
+                line.style.transform = 'translateX(-50%)'; // Center the line on the position
+                
+                spectrumBox.appendChild(line);
+            }
+
+        }
+
+        function clearSpectrum() {
+            spectrumBox.innerHTML = '';
+        }
+
         // Create 162 cells (18 columns × 9 rows)
         for (let i = 0; i < 162; i++) {
             const element = document.createElement('div');
-            element.className = 'element';
+            if (emptyCells.includes(i)){
+                element.className = 'element empty';
+            } else {
+                element.className = 'element';
+                element.dataset.playing = 'false'; // Track playing state
+                
+                // Click event to toggle play/pause
+                element.addEventListener('click', function() {
+                    const symbol = cellToElement[i];
+                    console.log(`clicked cell ${i}`);
+                    
+                    // If this element is already playing, stop it
+                    if (element.dataset.playing === 'true') {
+                        element.dataset.playing = 'false';
+                        element.style.backgroundColor = '#2a2a2a'; // Reset to original color
+                        currentlyPlaying = null;
+                        clearSpectrum();
+                        stopSound();
+                        console.log(`Stopped playing cell ${i}`);
+                    } else {
+                        // Stop any currently playing element
+                        if (currentlyPlaying !== null) {
+                            currentlyPlaying.dataset.playing = 'false';
+                            currentlyPlaying.style.backgroundColor = '#2a2a2a';
+                            stopSound();
+                        }
+                        
+                        // Start playing this element
+                        element.dataset.playing = 'true';
+                        element.style.backgroundColor = '#2a8a2a'; // Green color
+                        currentlyPlaying = element;
+                        displaySpectrum(symbol)
+                        playSound(symbol);
+                        console.log(`Started playing cell ${i}`);
+                    }
+                });
+            }
+            
             element.id = `cell-${i}`;
-            
-            // Add click event (placeholder for now)
-            element.addEventListener('click', function() {
-                console.log(`Clicked cell ${i}`);
-                // Future: Play sound and show emission spectrum
-            });
-            
             periodicTable.appendChild(element);
+        }
+
+        function initializePeriodicTable() {
+            // populate cell with element symbols
+            for (let i = 0; i < 162; i++) {
+                if (!emptyCells.includes(i) && cellToElement[i]) {
+                    const cell = document.getElementById(`cell-${i}`)
+                    const symbol = cellToElement[i];
+
+                    if (elementData[symbol]) {
+                        cell.textContent = symbol;
+                        // more data here
+                    }
+                }
+            }
         }
     </script>
 </body>
