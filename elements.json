@@ -84758,6 +84758,14 @@
       ]
     ]
   },
+  "Se": {
+    "symbol": "Se",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
   "Br": {
     "symbol": "Br",
     "wavelengths": [
@@ -91230,6 +91238,22 @@
         0
       ]
     ]
+  },
+  "Zr": {
+    "symbol": "Zr",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Nb": {
+    "symbol": "Nb",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
   },
   "Mo": {
     "symbol": "Mo",
@@ -111603,6 +111627,14 @@
       ]
     ]
   },
+  "Pr": {
+    "symbol": "Pr",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
   "Nd": {
     "symbol": "Nd",
     "wavelengths": [
@@ -111696,6 +111728,14 @@
         211
       ]
     ]
+  },
+  "Pm": {
+    "symbol": "Pm",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
   },
   "Sm": {
     "symbol": "Sm",
@@ -156038,6 +156078,22 @@
       ]
     ]
   },
+  "Re": {
+    "symbol": "Re",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Os": {
+    "symbol": "Os",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
   "Ir": {
     "symbol": "Ir",
     "wavelengths": [
@@ -160183,6 +160239,14 @@
       ]
     ]
   },
+  "At": {
+    "symbol": "At",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
   "Rn": {
     "symbol": "Rn",
     "wavelengths": [
@@ -160231,6 +160295,14 @@
         0
       ]
     ]
+  },
+  "Fr": {
+    "symbol": "Fr",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
   },
   "Ra": {
     "symbol": "Ra",
@@ -222838,5 +222910,229 @@
         0
       ]
     ]
+  },
+  "Pa": {
+    "symbol": "Pa",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "U": {
+    "symbol": "U",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Np": {
+    "symbol": "Np",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Pu": {
+    "symbol": "Pu",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Am": {
+    "symbol": "Am",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Cm": {
+    "symbol": "Cm",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Bk": {
+    "symbol": "Bk",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Cf": {
+    "symbol": "Cf",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Es": {
+    "symbol": "Es",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Fm": {
+    "symbol": "Fm",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Md": {
+    "symbol": "Md",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "No": {
+    "symbol": "No",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Lr": {
+    "symbol": "Lr",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Rf": {
+    "symbol": "Rf",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Db": {
+    "symbol": "Db",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Sg": {
+    "symbol": "Sg",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Bh": {
+    "symbol": "Bh",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Hs": {
+    "symbol": "Hs",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Mt": {
+    "symbol": "Mt",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Ds": {
+    "symbol": "Ds",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Rg": {
+    "symbol": "Rg",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Cn": {
+    "symbol": "Cn",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Nh": {
+    "symbol": "Nh",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Fl": {
+    "symbol": "Fl",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Mc": {
+    "symbol": "Mc",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Lv": {
+    "symbol": "Lv",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Ts": {
+    "symbol": "Ts",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
+  },
+  "Og": {
+    "symbol": "Og",
+    "wavelengths": null,
+    "rel_intensities": null,
+    "frequencies": null,
+    "amplitudes": null,
+    "colors": null
   }
 }

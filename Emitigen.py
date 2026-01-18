@@ -275,6 +275,14 @@ if __name__ == "__main__":
         wavelengths, rel_intensities, frequencies, amplitudes, rgb = get_color_and_sound_data(symbol)
         if wavelengths is None:
             print(f"Skipping {symbol} - no spectral data available")
+            data[symbol] = {
+                "symbol": symbol,
+                "wavelengths": None,
+                "rel_intensities": None,
+                "frequencies": None,
+                "amplitudes": None,
+                "colors": None
+            }
             continue
 
         data[symbol] = {
