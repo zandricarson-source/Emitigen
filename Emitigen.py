@@ -15,12 +15,14 @@ current final output is table of Å, Rel Intensity, Hz, Rel Amplitude, (R, G, B)
 4. convert list of sound frequencies and amplitudes into a sound
     4.1 use scipy wave file
 5. display the color and sound somehow
+    5.1 just json to port it to javascript, visualize there
 """
 
 from astroquery.nist import Nist
 import astropy.units as u
 import numpy as np
 from scipy.io import wavfile
+import json
 
 VISIBLE_RANGE = (3800, 7500)
 
@@ -145,108 +147,6 @@ def wavelength_to_rgb(wavelength, gamma=0.8):
     B *= 255
     return (int(R), int(G), int(B))
 
-#allows to be more specific but get_element_spectrum is more specialized
-def get_element_data(element, ion_stage='I', wavelength_range=VISIBLE_RANGE):
-    """
-    Get spectral line data from NIST ASD for any element.
-    
-    Parameters:
-    -----------
-    element : str
-        Element symbol (e.g., 'H', 'Na', 'O')
-    ion_stage : str
-        Ionization stage ('I' for neutral, 'II' for singly ionized, etc.)
-    wavelength_range : tuple or None
-        (min_wavelength, max_wavelength) in Angstroms
-        If None, gets all available data
-    
-    Returns:
-    --------
-    wavelengths : numpy array
-        Ritz wavelengths in Angstroms
-    intensities : numpy array
-        Relative intensities
-    full_table : astropy Table
-        Complete data table with all columns
-    
-    Examples:
-    ---------
-    # Get hydrogen data in visible range
-    wl, intensity, table = get_element_data('H', 'I', (3000, 7000))
-    
-    # Get all sodium data
-    wl, intensity, table = get_element_data('Na', 'I')
-    
-    # Get oxygen data
-    wl, intensity, table = get_element_data('O', 'I', (2000, 10000))
-    """
-
-    # Format the spectrum name
-    linename = f"{element} {ion_stage}"
-    
-    try:
-        if wavelength_range:
-            # Query with wavelength range
-            min_wl, max_wl = wavelength_range
-            table = Nist.query(min_wl * u.AA, max_wl * u.AA, linename=linename)
-        else:
-            # Query all wavelengths (use a very broad range)
-            table = Nist.query(1 * u.AA, 1000000 * u.AA, linename=linename)
-        
-        if table is None or len(table) == 0:
-            print(f"No data found for {linename}")
-            return None, None
-        
-        # Extract Ritz wavelengths (calculated from energy levels)
-        # Column name is 'Ritz' in the table
-        ritz_wl = []
-        rel_int = []
-        
-        for row in table:
-            # Get Ritz wavelength (prioritize this over observed)
-            if 'Ritz' in table.colnames and row['Ritz']:
-                try:
-                    # Clean the wavelength string (remove +, ?, *, etc.)
-                    wl_str = str(row['Ritz']).strip()
-                    # Remove common NIST quality indicators
-                    wl_str = wl_str.rstrip('+?*:')
-                    wl = float(wl_str)
-                    ritz_wl.append(wl)
-                    
-                    # Get relative intensity if available
-                    if 'Rel.' in table.colnames and row['Rel.']:
-                        try:
-                            int_str = str(row['Rel.']).strip()
-                            int_str = int_str.rstrip('+?*:')
-                            intensity = float(int_str)
-                        except (ValueError, TypeError):
-                            intensity = np.nan
-                    else:
-                        intensity = np.nan
-                    rel_int.append(intensity)
-                    
-                except (ValueError, TypeError):
-                    # Skip rows that can't be converted
-                    continue
-        
-        wavelengths = np.array(ritz_wl)
-        intensities = np.array(rel_int)
-
-        valid_mask = ~np.isnan(intensities)
-        wavelengths = wavelengths[valid_mask]
-        intensities = intensities[valid_mask]
-        
-        print(f"Retrieved {len(wavelengths)} spectral lines for {linename}")
-        if len(wavelengths) > 0:
-            print(f"Wavelength range: {wavelengths.min():.2f} - {wavelengths.max():.2f} Å")
-        
-        return wavelengths, intensities
-        
-    except Exception as e:
-        print(f"Error querying NIST: {e}")
-        print("Make sure you have astroquery installed: pip install astroquery")
-        return None, None
-
 #helper function, wavelength to sound requency
 def A_to_hz_log(A):
     A = max(3800, min(7500, A))
@@ -270,13 +170,14 @@ def RI_to_Amp(ri, max_ri):
     amp = ri/max_ri
     return float(amp)
 
+# generates a sound file in order to hear the element's frequency data
 def freq_and_amp_to_sound(frequencies, amplitudes):
     frequencies = np.array(frequencies)  # Hz
     amplitudes = np.array(amplitudes)    # Relative amplitudes
 
     # Audio parameters
     sample_rate = 44100  # CD quality
-    duration = 2.0       # seconds
+    duration = 20.0       # seconds
 
     # Create time array
     t = np.linspace(0, duration, int(sample_rate * duration))
@@ -322,12 +223,31 @@ def get_color_and_sound_data(element):
     table.append(amp)
     table.append(rgb)
     return table
+    
 
 # Example usage
 if __name__ == "__main__":
     print("=" * 70)
-    print("NIST ASD SPECTRAL DATA EXTRACTOR")
+    print("ELEMENT SPECTRUM CONVERTER")
     print("=" * 70)
 
-    table = get_color_and_sound_data('He')
-    audio_data = freq_and_amp_to_sound(table[0], table[1])
+    #table = get_color_and_sound_data('Xe')
+
+    elements = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O',
+                'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 
+                'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 
+                'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 
+                'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 
+                'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 
+                'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba',
+                'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd',
+                'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf',
+                'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
+                'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra',
+                'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm',
+                'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 
+                'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 
+                'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og']
+    
+
+    #audio_data = freq_and_amp_to_sound(table[0], table[1])
