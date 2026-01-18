@@ -31,6 +31,10 @@
             letter-spacing: 2px;
         }
 
+        h2 {
+            text-align: center
+        }
+
         .description {
             max-width: 900px;
             margin: 0 auto 30px;
@@ -242,7 +246,7 @@
                 const rgbColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 
                 // calculate line thickness from amplitude
-                const thickness = 1 + (amplitude * 4);
+                const thickness = 0.2 + (amplitude * 4);
 
                 // create line element
                 const line = document.createElement('div');
