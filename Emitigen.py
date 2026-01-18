@@ -92,7 +92,7 @@ def get_element_spectrum(element='H'):
         if len(wavelengths) > 0:
             print(f"Wavelength range: {wavelengths.min():.2f} - {wavelengths.max():.2f} Å")
         
-        return wavelengths, intensities
+        return wavelengths.tolist(), intensities.tolist()
     
     except Exception as e:
         print(f"Error querying NIST: {e}")
@@ -206,23 +206,42 @@ def get_color_and_sound_data(element):
     :param element: element symbol
     : output: returns a table of Å, Rel Intensity, Hz, Rel Amplitude, (R, G, B)
     """
-    table = []
-    wl, ri = get_element_spectrum(element)
-    hz = []
-    amp = []
-    rgb = []
+    wavelengths, rel_intensities = get_element_spectrum(element)
+    
+    if wavelengths is None or rel_intensities is None:
+        print(f"No valid spectrum data for {element}, skipping...")
+        return None, None, None, None, None
+    
+    if len(wavelengths) == 0:
+        print(f"Empty spectrum data for {element}, skipping...")
+        return None, None, None, None, None
+    
+    frequencies = []
+    amplitudes = []
+    rgbs = []
+    valid_wavelengths = []
+    valid_intensities = [] # removes entries where the rgb value is 0, 0 ,0
 
-    for l in wl:
-        hz.append(A_to_hz_log(l))
-    for i in ri:
-        amp.append(RI_to_Amp(i, max(ri)))
-    for i in range(len(wl)):
-        rgb.append(wavelength_to_rgb(wl[i]/10, amp[i]))
+    for i in range(len(rel_intensities)):
+        freq = A_to_hz_log(wavelengths[i])
+        amp = RI_to_Amp(rel_intensities[i], max(rel_intensities))
+        rgb = wavelength_to_rgb(wavelengths[i]/10, rel_intensities[i]/max(rel_intensities))
 
-    table.append(hz)
-    table.append(amp)
-    table.append(rgb)
-    return table
+        #filter (0, 0, 0) colors out
+        if rgb != (0, 0, 0):
+            valid_wavelengths.append(wavelengths[i])
+            valid_intensities.append(rel_intensities[i])
+            frequencies.append(freq)
+            amplitudes.append(amp)
+            rgbs.append(rgb)
+
+    if len(valid_wavelengths) == 0:
+        print(f"No visible spectrum data for {element}, skipping...")
+        return None, None, None, None, None
+    
+    #debug
+    #print(f"wave len: {len(wavelengths)} inten len: {len(rel_intensities)} freq len: {len(frequencies)} amp len: {len(amplitudes)} rgb len: {len(rgb)}")
+    return valid_wavelengths, valid_intensities, frequencies, amplitudes, rgbs
     
 
 # Example usage
@@ -231,9 +250,10 @@ if __name__ == "__main__":
     print("ELEMENT SPECTRUM CONVERTER")
     print("=" * 70)
 
-    #table = get_color_and_sound_data('Xe')
+    #example of function outputting arrays for sodium
+    wavelengths, rel_intensities, frequencies, amplitudes, rgb = get_color_and_sound_data('H')
 
-    elements = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O',
+    symbols = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O',
                 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 
                 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 
                 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 
@@ -248,6 +268,29 @@ if __name__ == "__main__":
                 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 
                 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 
                 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og']
+    data = {}
+
+    #generate data for each element into json
+    for symbol in symbols:
+        wavelengths, rel_intensities, frequencies, amplitudes, rgb = get_color_and_sound_data(symbol)
+        if wavelengths is None:
+            print(f"Skipping {symbol} - no spectral data available")
+            continue
+
+        data[symbol] = {
+            "symbol": symbol,
+            "wavelengths": wavelengths,
+            "rel_intensities": rel_intensities,
+            "frequencies": frequencies,
+            "amplitudes": amplitudes,
+            "colors": rgb
+        }
+    
+    #export to json
+    with open('elements.json', 'w') as f:
+        json.dump(data, f, indent=2)
+    
+    print("exported data to elements.json")
     
 
     #audio_data = freq_and_amp_to_sound(table[0], table[1])
