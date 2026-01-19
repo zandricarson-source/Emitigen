@@ -250,8 +250,9 @@ if __name__ == "__main__":
     print("ELEMENT SPECTRUM CONVERTER")
     print("=" * 70)
 
-    #example of function outputting arrays for sodium
-    wavelengths, rel_intensities, frequencies, amplitudes, rgb = get_color_and_sound_data('H')
+    #example
+    #wavelengths, rel_intensities, frequencies, amplitudes, rgb = get_color_and_sound_data('H')
+    #audio = freq_and_amp_to_sound(frequencies, amplitudes)
 
     symbols = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O',
                 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 
